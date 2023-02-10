@@ -12,6 +12,7 @@ from pandas.api.types import is_numeric_dtype
 import re
 import string
 import nltk
+
 from nltk.corpus import stopwords
 from nltk.stem.snowball import FrenchStemmer
 import unidecode
