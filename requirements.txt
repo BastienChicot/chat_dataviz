@@ -1,6 +1,4 @@
 nltk
-nltk.corpus
-nltk.stem.snowball
 unidecode
 spacy
 seaborn
