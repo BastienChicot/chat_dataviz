@@ -2,6 +2,5 @@ nltk
 unidecode
 spacy
 seaborn
-scripts.trait_dde
-scipts.actions
+
 fr_core_news_md @https://huggingface.co/spacy/fr_core_news_md/resolve/main/fr_core_news_md-any-py3-none-any.whl
