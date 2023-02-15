@@ -15,7 +15,7 @@ def get_retour (dde):
     def filtrer_table(objt) :
         
         for key,item in objt.filtres.items():
-            objt.data = objt.data.loc[objt.data[key].astype(str) == str(objt.filtres[key])]
+            objt.data = objt.data.loc[(objt.data[key].astype(str)).isin(objt.filtres[key])]
         
         return(objt.data)
 
@@ -25,14 +25,54 @@ def get_retour (dde):
     for elt in dde.liste_var:
         if elt in list(dde.filtres):
             dde.liste_var = dde.liste_var[dde.liste_var != elt]
+            
+    def second_filtre(objt, elt):
+    
+        if len(elt.mot) >= 4:
+            
+            for col in objt.data.columns:
+                
+                if elt.mot in objt.data[col] :
+                                       
+                    objt.data = objt.data.loc[objt.data[col] == elt.mot]
+                
+                elif elt.mot.upper() in objt.data[col] :
+ 
+                
+                    objt.data = objt.data.loc[objt.data[col] == elt.mot.upper()]
+        
+        else :
+            pass
+                
+                
+        return(objt.data)
+        
 
+    # for t in dde.liste_mot :
+        
+    #     dde.data = second_filtre(dde, t)
+        
     def groupe_data (objt):
+
         if ("somme" in objt.type_calcul) :
-            objt.data = objt.data.groupby(list(objt.liste_var)[0]).sum().reset_index()
+            if objt.data[list(objt.liste_var)[1]].dtypes == "O" or \
+                objt.data[list(objt.liste_var)[1]].dtypes == "str" :
+                    objt.data = objt.data.groupby(list(objt.liste_var)[1]).sum().reset_index()
+            else:
+                objt.data = objt.data.groupby(list(objt.liste_var)[0]).sum().reset_index()
         elif ("moyenne" in objt.type_calcul) :
-            objt.data = objt.data.groupby(list(objt.liste_var)[0]).mean().reset_index()
+            if objt.data[list(objt.liste_var)[1]].dtypes == "O" or \
+                objt.data[list(objt.liste_var)[1]].dtypes == "str" :
+                    objt.data = objt.data.groupby(list(objt.liste_var)[1]).mean().reset_index()
+            else :
+                objt.data = objt.data.groupby(list(objt.liste_var)[0]).mean().reset_index()
+                
         elif ("compte" in objt.type_calcul) :
-            objt.data = objt.data.groupby(list(objt.liste_var)[0]).nunique().reset_index()
+            if objt.data[list(objt.liste_var)[1]].dtypes == "O" or \
+                objt.data[list(objt.liste_var)[1]].dtypes == "str" :
+                    objt.data = objt.data.groupby(list(objt.liste_var)[1]).nunique().reset_index()
+            else:
+                objt.data = objt.data.groupby(list(objt.liste_var)[0]).nunique().reset_index()
         else:
             if len(list(objt.liste_var)) > 1:
                 if objt.data[list(objt.liste_var)[1]].dtypes == "O" or \
@@ -49,19 +89,22 @@ def get_retour (dde):
                    
         return(objt.data)
                 
-            
+
     if ("groupe" in dde.type_calcul) :
+
         dde.type_calcul = dde.type_calcul[dde.type_calcul != "groupe"]  
+
         if len(dde.type_calcul) != 0 :
             dde.type_calcul = np.array(list(dde.type_calcul)[0])
         
         dde.data = groupe_data(dde)
-        
+
     dde.data = dde.data[list(dde.liste_var)]
         
     representation = str(dde.type_representation)
     
     if representation == "graphique" :
+
         if len(dde.type_graph) > 0:
             grph = dde.type_graph[0]
 
@@ -119,12 +162,13 @@ def get_retour (dde):
                     dde.retour = sns.scatterplot(data=dde.data, x=dde.data[igrec])
                     
             else:
-                
+             
                 dde.retour = str("Pas de résultat possible pour ce type de graphique" +
                                  "variable : " + list(dde.liste_var) + "\n" +
                                  "calcul : " + dde.type_calcul + "\n" )
                                  
         else:
+
             if len(dde.liste_var) > 1:
 
                 if all(dde.data.dtypes) == "O" or\
@@ -181,10 +225,8 @@ def get_retour (dde):
                     dde.retour = sns.lineplot(data=dde.data, x=dde.data["annee"], y=dde.data[ix])
                     
             else :
-
-                dde.retour = str("Pas de résultat possible pour ce type de graphique" +
-                 "variable : " + dde.liste_var + "\n" +
-                 "calcul : " + dde.type_calcul + "\n" )
+                
+                dde.retour = str(dde.dde) + " : " + str(dde.data[list(dde.liste_var)[0]].nunique())
 
     elif representation == "dataframe" :
         dde.retour = dde.data

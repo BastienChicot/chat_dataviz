@@ -12,13 +12,13 @@ from pandas.api.types import is_numeric_dtype
 import re
 import string
 import nltk
-nltk.download('punkt')
 from nltk.corpus import stopwords
 from nltk.stem.snowball import FrenchStemmer
 import unidecode
 import spacy
 
-from scripts.references import *
+from references import *
+from requete import build_url, call_api
 nlp = spacy.load('fr_core_news_md')
 
 stemmer = FrenchStemmer()
@@ -30,7 +30,7 @@ class mot():
         self.liste_tag = []
 
 class demande():
-    def __init__(self,texte,data):
+    def __init__(self,texte):
         self.dde = texte
         
         self.filtres = {}
@@ -39,7 +39,11 @@ class demande():
         
         self.retour = ""
 
-        self.data = data
+        self.data = pd.DataFrame()
+        
+        self.type_dataset = ""
+        
+        self.url = ""
         
         if type(self.dde) == str:
             self.txt = self.dde.replace("'", " ")
@@ -54,25 +58,33 @@ class demande():
                 
             self.tokens = nltk.word_tokenize(self.elt_ss)
             # self.tokens = [word for word in self.tokens if word not in stopwords.words('french')]
-
+##FILTERS
             for elt in self.tokens:
-                if elt.upper() in self.data["marque"].unique():
+                if elt.upper() in marques:
                     i=elt.upper()
-                    self.filtres.update({"marque":str(i)})
-                if elt in self.data["annee"].unique().astype(str):
-                    self.filtres.update({"annee":str(elt)})
-                if elt.upper() in self.data["modele"].unique():
-                    i = elt.upper()
-                    self.filtres.update({"modele":str(i)})
-                if elt.upper() in self.data["modele"].unique():
-                    i = elt.upper()
-                    self.filtres.update({"modele":str(i)})
+                    if "marque" not in self.filtres:
+                        self.filtres.update({"marque":[str(i)]})
+                    else :
+                        self.filtres["marque"].append(str(i))
+                if elt in str(annees):
+                    if "annee" not in self.filtres:
+                        self.filtres.update({"annee":[str(elt)]})
+                    else:
+                        self.filtres["annee"].append(str(elt))
                 else:
                     pass
-                                
+
+##STEMATISATION                                
             for elt in range(0,len(self.tokens)):
                 self.tokens[elt] = stemmer.stem(self.tokens[elt])
-                
+
+##TYPE DATASET
+            for elt in self.tokens :
+                for key in type_datast:
+                    if elt in type_datast[str(key)]:
+                        self.type_dataset = str(key)
+              
+##TYPE GRAPH
             for elt in self.tokens :
                 for key in type_graph:
                     if elt in type_graph[str(key)]:
@@ -91,9 +103,11 @@ class demande():
                         if elt.mot in i[cle]:
                             elt.liste_affect.append(cle)
                             elt.liste_tag.append(k)                    
-                            
+
+###RECUPERATION D INFO                            
             self.process()
-        
+            
+
         else:
             return("Je n'ai pas compris votre question")
 
@@ -113,7 +127,7 @@ class demande():
         
             
     def det_var(self):
-        self.liste_var = "modele"        
+        self.liste_var = "modele_utac"        
         if any(self.df_inter["tag"] == "variable"):
             variables = self.df_inter.loc[self.df_inter["tag"] == "variable"]
             if len(variables["tag"].unique()) == 1:
@@ -155,7 +169,7 @@ class demande():
                     self.type_calcul = "somme"
             
             else:
-                pass
+                self.type_calcul = "compte"
     
     def det_represent(self):
         self.type_representation = "dataframe"
@@ -184,12 +198,29 @@ class demande():
             
             else:
                 pass
+
+    def get_table(self) :
+###CONSTRUCTION DE LA TABLE
+        self.url = build_url(self)
+        
+        self.data = call_api(self.url)
+        
+        if len(self.data.columns) == 0:
+            print("Pas de données")
                 
     def process(self):
         self.interpretation()
         self.det_var()
-        self.det_calcul()
-        self.det_represent()
+        self.get_table()
+
+        if not self.data.empty:
+            self.det_calcul()
+            self.det_represent()
+            
+        else :
+            print("Pas de données disponibles pour cette demande : " + self.dde)
+            
+
         
 
 # txt0 = "annee et marque mercedes"

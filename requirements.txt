@@ -1,6 +1,8 @@
 nltk
+nltk.corpus
+nltk.stem.snowball
 unidecode
 spacy
 seaborn
-
-fr_core_news_md @https://huggingface.co/spacy/fr_core_news_md/resolve/main/fr_core_news_md-any-py3-none-any.whl
+scripts.trait_dde
+scipts.actions
